@@ -10,7 +10,8 @@ export default {
         customBrown: '#705C53',
         customBrown2:"#B7B7B7",
         customBrown3:"#F5F5F7",
-        customBrown4:"#EDDFE0"
+        customBrown4:"#EDDFE0",
+        custom:"#FFCFB3"
       },
     },
   },

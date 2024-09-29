@@ -1,6 +1,6 @@
 const Hero = () => {
   return (
-    <div className="bg-gradient-to-r from-white from-4% via-customBrown2 via-20% to-customBrown1 to-100% h-3/4 flex ">
+    <div className="bg-gradient-to-b from-white from-4% via-custom via-20% to-customBrown1 to-100% h-3/4 flex ">
       <div className="flex mr-20">
       <img src="./src/assets/icons/a-woman-who-uses-a-computer-inspiration-svgrepo-com.svg"/>
       </div>

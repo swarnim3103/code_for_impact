@@ -24,6 +24,10 @@ const navlinks = [
           title: "Home",
           link: "/",
         },
+        {
+          title: "Library",
+          link: ".src/sections/Library.jsx",
+        },
       ],
     }
   ];

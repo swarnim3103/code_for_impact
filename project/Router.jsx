@@ -3,8 +3,6 @@ import {
   App,
   Dashboard,
 } from "./src/pages/index.js";
-
-
 function Router() {
   return (
     <BrowserRouter>

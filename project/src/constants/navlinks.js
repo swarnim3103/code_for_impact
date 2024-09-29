@@ -17,5 +17,14 @@ const navlinks = [
        
       ],
     },
+    {
+      pageName: "services",
+      links: [
+        {
+          title: "Home",
+          link: "/",
+        },
+      ],
+    }
   ];
   export default navlinks;

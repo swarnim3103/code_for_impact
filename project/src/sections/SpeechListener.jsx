@@ -82,22 +82,24 @@ const SpeechListener = () => {
 
     return (
         <div className="container mx-auto p-6">
-            <h1 className="text-4xl font-bold mb-6 text-center text-gray-800 animate-bounce">SpeechEase</h1>
-
-            <button
+            <h1 className="text-4xl font-bold mb-6 text-center text-custom2 animate-bounce">SpeechEase</h1>
+<div>
+     <button
                 onClick={startRecording}
                 disabled={isListening}
-                className={`transition duration-500 ease-in-out transform hover:scale-105 ${isListening ? 'bg-gray-400 cursor-not-allowed' : 'bg-customBrown hover:bg-customBrown2'} text-white font-bold py-3 px-6 rounded`}
+                className={`transition duration-500 ease-in-out transform hover:scale-105 ${isListening ? 'bg-gray-400 cursor-not-allowed' : 'bg-customBrown hover:bg-customBrown2'} text-white font-bold py-3 px-6 rounded mr-60 ml-80 mt-20`}
             >
                 {isListening ? 'Recording...' : 'Start Recording'}
             </button>
 
             <button
                 onClick={sendAudioForPrediction}
-                className="transition duration-500 ease-in-out transform hover:scale-105 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded mt-4"
+                className="transition duration-500 ease-in-out transform hover:scale-105 bg-custom hover:bg-customBrown text-white font-bold py-3 px-6 rounded mt-4"
             >
                 Send for Analysis
             </button>
+</div>
+           
 
             <div className="mt-6 w-full md:w-3/4 lg:w-2/3 xl:w-1/2 mx-auto">
                 <h2 className="text-2xl font-semibold mb-2 text-gray-700">Transcript:</h2>
@@ -110,7 +112,7 @@ const SpeechListener = () => {
                 <h2 className="text-2xl font-semibold mb-2 text-gray-700">Feedback:</h2>
                 <div
                     className={`p-4 rounded-lg shadow-md border border-gray-300 text-center ${
-                        feedback.includes('issues') ? 'bg-red-200 text-red-800 animate-pulse' : 'bg-green-200 text-green-800'
+                        feedback.includes('issues') ? 'bg-red-200 text-red-800 animate-pulse' : 'bg-customBrown4 text-green-800'
                     }`}
                     style={{ height: '100px' }}
                 >

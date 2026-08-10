@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --color-customBrown: #8b5e3c;
+  --color-customBrown1: #a9754f;
+  --color-customBrown2: #6f4a2e;
+  --color-customBrown4: #f3e5d8;
+  --color-custom: #f1d9b5;
+  --color-custom2: #5c3b21;
+}

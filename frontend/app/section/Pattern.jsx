@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const RecurringPatterns = () => {
+const Pattern = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
 
@@ -57,4 +57,4 @@ const RecurringPatterns = () => {
   );
 };
 
-export default RecurringPatterns;
+export default Pattern;

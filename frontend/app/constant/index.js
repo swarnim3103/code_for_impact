@@ -1,3 +1,3 @@
-import navlinks from "./navlinks.js";
+import navlinks from "./navlink.js";
 
 export { navlinks };

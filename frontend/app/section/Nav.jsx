@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { useState } from "react";
-import navlinks from "../constant/navlink.js";
+import { navlinks } from "../constant/index.js";
 
 function Nav({ page }) {
   const [hamburgerClasses, setHamburgerClasses] = useState("hidden");

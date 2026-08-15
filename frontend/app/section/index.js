@@ -6,5 +6,7 @@ import SpeechListener from "./SpeechListener.jsx";
 import Pronunciation from "./Pronunciation.jsx";
 import Library from "./Library.jsx";
 import Pattern from "./Pattern.jsx";
+import Login from "./Login.jsx";
+import Signup from "./Signup.jsx";
 
-export { Nav, Hero, About, Footer, SpeechListener, Pronunciation, Library, Pattern };
+export { Nav, Hero, About, Footer, SpeechListener, Pronunciation, Library, Pattern, Login, Signup };

@@ -1,12 +1,12 @@
 """
-error_tracker.py
+error.py
 
 Persists every pronunciation attempt to SQLite and answers the question
 your resume bullet claims: "which phonetic errors keep recurring for this
 user, across different words and sessions?"
 
-Single-user scope for now (no auth in this project) — everything is
-tracked under a default user_id.
+Every function now requires a real user_id (from the JWT), so data is
+scoped per account instead of shared across all visitors.
 """
 
 import sqlite3
@@ -14,7 +14,6 @@ from datetime import datetime
 from contextlib import contextmanager
 
 DB_PATH = "speechease.db"
-DEFAULT_USER = "default_user"
 
 
 @contextmanager
@@ -33,7 +32,7 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS attempts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
                 target_word TEXT NOT NULL,
                 transcribed_word TEXT,
                 correct INTEGER NOT NULL,
@@ -53,7 +52,7 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS library_words (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
                 word TEXT NOT NULL,
                 category TEXT NOT NULL,
                 created_at TEXT NOT NULL,
@@ -62,7 +61,7 @@ def init_db():
         """)
 
 
-def log_attempt(analysis_result: dict, user_id: str = DEFAULT_USER) -> int:
+def log_attempt(analysis_result: dict, user_id: int) -> int:
     with _connect() as conn:
         cur = conn.execute(
             """INSERT INTO attempts
@@ -88,8 +87,7 @@ def log_attempt(analysis_result: dict, user_id: str = DEFAULT_USER) -> int:
         return attempt_id
 
 
-def get_recurring_errors(user_id: str = DEFAULT_USER, min_occurrences: int = 2, limit: int = 5):
-    """Phoneme substitution patterns that recur across ALL past attempts."""
+def get_recurring_errors(user_id: int, min_occurrences: int = 2, limit: int = 5):
     with _connect() as conn:
         rows = conn.execute(
             """
@@ -111,12 +109,12 @@ def get_recurring_errors(user_id: str = DEFAULT_USER, min_occurrences: int = 2, 
     ]
 
 
-def generate_personalized_feedback(user_id: str = DEFAULT_USER) -> str:
+def generate_personalized_feedback(user_id: int) -> str:
     from phonetic import describe_phoneme
 
     recurring = get_recurring_errors(user_id)
     if not recurring:
-        return "Not enough data yet to spot a pattern — keep practicing!"
+        return "Not enough data yet to spot a pattern -- keep practicing!"
 
     top = recurring[0]
     lines = [
@@ -125,14 +123,14 @@ def generate_personalized_feedback(user_id: str = DEFAULT_USER) -> str:
     ]
     if len(recurring) > 1:
         others = ", ".join(
-            f"{describe_phoneme(r['expected'])} → {describe_phoneme(r['actual'])}"
+            f"{describe_phoneme(r['expected'])} -> {describe_phoneme(r['actual'])}"
             for r in recurring[1:]
         )
         lines.append(f"Other recurring patterns: {others}.")
     return " ".join(lines)
 
 
-def get_words_needing_practice(user_id: str = DEFAULT_USER, limit: int = 10):
+def get_words_needing_practice(user_id: int, limit: int = 10):
     with _connect() as conn:
         rows = conn.execute(
             """
@@ -148,7 +146,7 @@ def get_words_needing_practice(user_id: str = DEFAULT_USER, limit: int = 10):
     return [{"word": r["target_word"], "misses": r["miss_count"]} for r in rows]
 
 
-def add_library_word(word: str, category: str, user_id: str = DEFAULT_USER):
+def add_library_word(word: str, category: str, user_id: int):
     with _connect() as conn:
         conn.execute(
             """INSERT OR IGNORE INTO library_words (user_id, word, category, created_at)
@@ -157,7 +155,7 @@ def add_library_word(word: str, category: str, user_id: str = DEFAULT_USER):
         )
 
 
-def get_library(user_id: str = DEFAULT_USER):
+def get_library(user_id: int):
     with _connect() as conn:
         rows = conn.execute(
             "SELECT word, category FROM library_words WHERE user_id = ? ORDER BY created_at",

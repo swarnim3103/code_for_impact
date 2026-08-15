@@ -1,126 +1,146 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useRef } from "react";
+import axios from "axios";
+import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
+
+const API_BASE = "http://localhost:5000";
+const RECORDING_MS = 5000;
 
 const SpeechListener = () => {
-    const [transcript, setTranscript] = useState('');
-    const [feedback, setFeedback] = useState('');
-    const [isListening, setIsListening] = useState(false);
-    const [audioBlob, setAudioBlob] = useState(null); 
+  const { isListening, transcript, error: recognitionError, listen } = useSpeechRecognition();
 
-    const startListening = () => {
-        setIsListening(true);
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.continuous = false;
-        recognition.interimResults = false;
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordSecondsLeft, setRecordSecondsLeft] = useState(0);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [feedback, setFeedback] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const countdownRef = useRef(null);
 
-        recognition.onresult = (event) => {
-            const speechText = event.results[event.results.length - 1][0].transcript;
-            setTranscript(speechText);
-            setIsListening(false);
-        };
+  const startRecording = async () => {
+    setFeedback("");
+    setAudioBlob(null);
 
-        recognition.onerror = (event) => {
-            console.error('Error occurred in recognition: ' + event.error);
-            setIsListening(false);
-        };
+    listen().catch(() => {});
 
-        recognition.start();
-    };
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    const startRecording = () => {
-        setIsListening(true);
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "audio/ogg";
 
-        // Use the MediaRecorder API to record audio
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                const mediaRecorder = new MediaRecorder(stream);
-                const audioChunks = [];
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      const chunks = [];
 
-                mediaRecorder.ondataavailable = (event) => {
-                    audioChunks.push(event.data);
-                };
+      mediaRecorder.ondataavailable = (event) => chunks.push(event.data);
+      mediaRecorder.onstop = () => {
+        setAudioBlob(new Blob(chunks, { type: mimeType }));
+        stream.getTracks().forEach((track) => track.stop());
+      };
 
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    setAudioBlob(audioBlob); 
-                };
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordSecondsLeft(RECORDING_MS / 1000);
 
-                mediaRecorder.start();
-                setTimeout(() => {
-                    mediaRecorder.stop();
-                    setIsListening(false);
-                }, 5000);  
-            })
-            .catch(error => {
-                console.error('Error accessing media devices:', error);
-                setIsListening(false);
-            });
-    };
+      countdownRef.current = setInterval(() => {
+        setRecordSecondsLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdownRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
 
-    const sendAudioForPrediction = async () => {
-        if (!audioBlob) {
-            setFeedback('No audio recorded yet');
-            return;
-        }
+      setTimeout(() => {
+        mediaRecorder.stop();
+        setIsRecording(false);
+        clearInterval(countdownRef.current);
+      }, RECORDING_MS);
+    } catch (err) {
+      console.error("Error accessing media devices:", err);
+      setFeedback("Could not access microphone. Check browser permissions.");
+      setIsRecording(false);
+    }
+  };
 
-        const formData = new FormData();
-        formData.append('file', audioBlob, 'speech.wav');
+  const sendAudioForPrediction = async () => {
+    if (!audioBlob) {
+      setFeedback("Record some audio first.");
+      return;
+    }
 
-        try {
-            const response = await axios.post('http://localhost:5000/predict', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-            const { speech_impediment_detected } = response.data;
-            setFeedback(speech_impediment_detected ? 'Speech issues detected' : 'Speech is clear');
-        } catch (error) {
-            console.error('Error sending audio for prediction:', error);
-            setFeedback('Error analyzing speech');
-        }
-    };
+    const extension = audioBlob.type.includes("webm") ? "webm" : "ogg";
+    const formData = new FormData();
+    formData.append("file", audioBlob, `speech.${extension}`);
 
-    return (
-        <div className="container mx-auto p-6">
-            <h1 className="text-4xl font-bold mb-6 text-center text-custom2 animate-bounce">SpeechEase</h1>
-<div>
-     <button
-                onClick={startRecording}
-                disabled={isListening}
-                className={`transition duration-500 ease-in-out transform hover:scale-105 ${isListening ? 'bg-gray-400 cursor-not-allowed' : 'bg-customBrown hover:bg-customBrown2'} text-white font-bold py-3 px-6 rounded mr-60 ml-80 mt-20`}
-            >
-                {isListening ? 'Recording...' : 'Start Recording'}
-            </button>
+    setAnalyzing(true);
+    try {
+      const response = await axios.post(`${API_BASE}/predict`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const { speech_impediment_detected } = response.data;
+      setFeedback(speech_impediment_detected ? "Speech issues detected" : "Speech is clear");
+    } catch (err) {
+      console.error("Error sending audio for prediction:", err);
+      const serverMessage = err.response?.data?.error;
+      setFeedback(serverMessage || "Error analyzing speech. Is the backend running?");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
-            <button
-                onClick={sendAudioForPrediction}
-                className="transition duration-500 ease-in-out transform hover:scale-105 bg-custom hover:bg-customBrown text-white font-bold py-3 px-6 rounded mt-4"
-            >
-                Send for Analysis
-            </button>
-</div>
-           
+  const busy = isRecording || isListening;
 
-            <div className="mt-6 w-full md:w-3/4 lg:w-2/3 xl:w-1/2 mx-auto">
-                <h2 className="text-2xl font-semibold mb-2 text-gray-700">Transcript:</h2>
-                <div className="p-4 bg-gray-100 border border-gray-300 rounded-lg shadow-md overflow-y-auto" style={{ height: '150px' }}>
-                    {transcript || <span className="text-gray-400">No speech detected yet...</span>}
-                </div>
-            </div>
+  return (
+    <div className="container mx-auto p-6">
+      <h1 className="text-4xl font-bold mb-6 text-center text-custom2">SpeechEase</h1>
 
-            <div className="mt-6 w-full md:w-3/4 lg:w-2/3 xl:w-1/2 mx-auto">
-                <h2 className="text-2xl font-semibold mb-2 text-gray-700">Feedback:</h2>
-                <div
-                    className={`p-4 rounded-lg shadow-md border border-gray-300 text-center ${
-                        feedback.includes('issues') ? 'bg-red-200 text-red-800 animate-pulse' : 'bg-customBrown4 text-green-800'
-                    }`}
-                    style={{ height: '100px' }}
-                >
-                    {feedback || <span className="text-gray-400">Awaiting feedback...</span>}
-                </div>
-            </div>
+      <div className="flex flex-wrap items-center justify-center gap-4 mt-10">
+        <button
+          onClick={startRecording}
+          disabled={busy}
+          className={`transition duration-300 ease-in-out transform hover:scale-105 ${
+            busy ? "bg-gray-400 cursor-not-allowed" : "bg-customBrown hover:bg-customBrown2"
+          } text-white font-bold py-3 px-6 rounded`}
+        >
+          {isRecording ? `Recording... (${recordSecondsLeft}s)` : "Start Recording"}
+        </button>
+
+        <button
+          onClick={sendAudioForPrediction}
+          disabled={!audioBlob || analyzing}
+          className="transition duration-300 ease-in-out transform hover:scale-105 bg-custom hover:bg-customBrown text-white font-bold py-3 px-6 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {analyzing ? "Analyzing..." : "Send for Analysis"}
+        </button>
+      </div>
+
+      <div className="mt-6 w-full md:w-3/4 lg:w-2/3 xl:w-1/2 mx-auto">
+        <h2 className="text-2xl font-semibold mb-2 text-gray-700">Transcript:</h2>
+        <div
+          className="p-4 bg-gray-100 border border-gray-300 rounded-lg shadow-md overflow-y-auto"
+          style={{ height: "150px" }}
+        >
+          {transcript || <span className="text-gray-400">No speech detected yet...</span>}
         </div>
-    );
+        {recognitionError && (
+          <p className="mt-2 text-sm text-red-600">{recognitionError}</p>
+        )}
+      </div>
+
+      <div className="mt-6 w-full md:w-3/4 lg:w-2/3 xl:w-1/2 mx-auto">
+        <h2 className="text-2xl font-semibold mb-2 text-gray-700">Feedback:</h2>
+        <div
+          className={`p-4 rounded-lg shadow-md border border-gray-300 text-center ${
+            feedback.includes("issues") ? "bg-red-200 text-red-800" : "bg-customBrown4 text-green-800"
+          }`}
+          style={{ height: "100px" }}
+        >
+          {feedback || <span className="text-gray-400">Awaiting feedback...</span>}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default SpeechListener;

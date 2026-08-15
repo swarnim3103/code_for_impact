@@ -1,7 +1,13 @@
 flask
 flask-cors
 librosa
+numba>=0.67.0
 numpy
 scikit-learn
 pronouncing
 datasets
+bcrypt
+PyJWT
+python-dotenv
+gunicorn
+pydub

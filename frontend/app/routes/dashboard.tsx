@@ -1,29 +1,23 @@
-import type { Route } from "./+types/dashboard";
-import { Nav, Footer, SpeechListener, Pronunciation, Library, Pattern } from "../section/index.js";
+import { Nav, SpeechListener, Pronunciation, Library, Pattern, Footer } from "../section";
 
-export function meta({}: Route.MetaArgs) {
-  return [{ title: "Dashboard — SpeechEase" }];
-}
-
-export default function Dashboard() {
+export default function DashboardPage() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Nav page="dashboard" />
-
-      <SpeechListener />
-
-      <div className="flex flex-col md:flex-row">
-        <div className="flex-1 flex items-center justify-center p-4">
-          <img src="/icons/download-1.jpeg" alt="Speech practice" />
-        </div>
-        <div className="flex-1 flex flex-col gap-6">
+      <main className="flex-1">
+        <section id="listen">
+          <SpeechListener />
+        </section>
+        <section id="practice" className="flex justify-center">
           <Pronunciation />
+        </section>
+        <section id="library">
           <Library />
-        </div>
-      </div>
-
-      <Pattern />
-
+        </section>
+        <section id="patterns">
+          <Pattern />
+        </section>
+      </main>
       <Footer />
     </div>
   );

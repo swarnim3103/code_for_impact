@@ -1,9 +1,12 @@
 import { Link } from "react-router";
 import { useState } from "react";
 import { navlinks } from "../constant/index.js";
+import { useAuth } from "../context/AuthContext";
 
 function Nav({ page }) {
   const [hamburgerClasses, setHamburgerClasses] = useState("hidden");
+  const { isAuthenticated, user, logout } = useAuth();
+
   function showHamburger() {
     setHamburgerClasses((prev) =>
       prev === "hidden"
@@ -11,6 +14,8 @@ function Nav({ page }) {
         : "hidden"
     );
   }
+
+  const activeGroup = navlinks.find((group) => group.pageName === page);
 
   const renderLink = (obj, index) =>
     obj.link[0] === "#" ? (
@@ -36,14 +41,34 @@ function Nav({ page }) {
         </div>
 
         <ul className="flex gap-16 text-xl font-sans max-md:hidden" id="nav-items">
-          {navlinks.map((group) => (group.pageName === page ? group.links.map(renderLink) : null))}
+          {activeGroup ? activeGroup.links.map(renderLink) : null}
         </ul>
 
-        <div className="flex gap-5 mr-5 max-md:hidden text-xl cursor-pointer">
-          {page === "home" && (
+        <div className="flex items-center gap-5 mr-5 max-md:hidden text-xl">
+          {page === "home" && !isAuthenticated && (
             <Link to="/dashboard" className="underline font-bold">
               Get Started
             </Link>
+          )}
+          {!isAuthenticated ? (
+            <>
+              <Link to="/login" className="font-semibold text-customBrown">
+                Log In
+              </Link>
+              <Link
+                to="/signup"
+                className="bg-customBrown text-white px-4 py-2 rounded-full font-semibold hover:bg-customBrown2"
+              >
+                Sign Up
+              </Link>
+            </>
+          ) : (
+            <>
+              <span className="text-sm text-gray-600">{user?.email}</span>
+              <button onClick={logout} className="font-semibold text-customBrown">
+                Log Out
+              </button>
+            </>
           )}
         </div>
 
@@ -56,14 +81,26 @@ function Nav({ page }) {
 
       <div className={hamburgerClasses}>
         <ul className="text-xl font-sans text-right">
-          {navlinks.map((group) =>
-            group.pageName === page
-              ? group.links.map((obj, index) => (
-                  <li key={index} className="cursor-pointer py-1">
-                    {obj.link[0] === "#" ? <a href={obj.link}>{obj.title}</a> : <Link to={obj.link}>{obj.title}</Link>}
-                  </li>
-                ))
-              : null
+          {activeGroup
+            ? activeGroup.links.map((obj, index) => (
+                <li key={index} className="cursor-pointer py-1">
+                  {obj.link[0] === "#" ? <a href={obj.link}>{obj.title}</a> : <Link to={obj.link}>{obj.title}</Link>}
+                </li>
+              ))
+            : null}
+          {!isAuthenticated ? (
+            <>
+              <li className="py-1">
+                <Link to="/login">Log In</Link>
+              </li>
+              <li className="py-1">
+                <Link to="/signup">Sign Up</Link>
+              </li>
+            </>
+          ) : (
+            <li className="py-1">
+              <button onClick={logout}>Log Out</button>
+            </li>
           )}
         </ul>
       </div>

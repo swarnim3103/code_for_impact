@@ -1,8 +1,7 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
-
-const API_BASE = "http://localhost:5000";
+import {API_BASE } from "../context/AuthContext";
 const RECORDING_MS = 5000;
 
 const SpeechListener = () => {

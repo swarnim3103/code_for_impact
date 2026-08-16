@@ -23,7 +23,7 @@ from error import (
 load_dotenv()
 
 app = Flask(__name__)
-DB_PATH = os.environ.get("DB_PATH", "speechease.db")
+
 FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000")
 CORS(app, resources={r"/*": {"origins": FRONTEND_ORIGIN}})
 

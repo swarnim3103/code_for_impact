@@ -12,8 +12,8 @@ from functools import wraps
 from flask import request, jsonify
 import sqlite3
 from contextlib import contextmanager
-import os
-DB_PATH = os.environ.get("DB_PATH", "speechease.db")
+
+DB_PATH = "speechease.db"
 JWT_SECRET = os.environ.get("JWT_SECRET", "dev-secret-change-this-in-production")
 JWT_ALGO = "HS256"
 JWT_EXPIRY_HOURS = 24 * 7  # 7 days

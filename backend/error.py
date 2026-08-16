@@ -12,8 +12,8 @@ scoped per account instead of shared across all visitors.
 import sqlite3
 from datetime import datetime
 from contextlib import contextmanager
-
-DB_PATH = "speechease.db"
+import os
+DB_PATH = os.environ.get("DB_PATH", "speechease.db")
 
 
 @contextmanager

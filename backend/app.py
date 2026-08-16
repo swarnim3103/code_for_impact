@@ -23,7 +23,7 @@ from error import (
 load_dotenv()
 
 app = Flask(__name__)
-
+DB_PATH = os.environ.get("DB_PATH", "speechease.db")
 FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000")
 CORS(app, resources={r"/*": {"origins": FRONTEND_ORIGIN}})
 
@@ -157,4 +157,4 @@ def library_post():
     return jsonify(get_library(request.user_id))
 
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False)
+    app.run()
